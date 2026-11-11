@@ -8,7 +8,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 DIST = Path(__file__).resolve().parent / "dist"
 ROOT = DIST.parent
-PAGE_ROUTES = ("", "guides/", "compatibility/")
+PAGE_ROUTES = ("", "guides/", "cli/", "sdk/", "compatibility/")
 LOCALES = {"": "en", "zh-hans/": "zh-Hans"}
 FORBIDDEN = re.compile(r"livekit-platform|livekit-docs|netonlive|spec-?0078", re.I)
 
@@ -72,4 +72,4 @@ for path in (DIST / "compatibility/index.html", DIST / "zh-hans/compatibility/in
     html = path.read_text()
     assert "<td>4/4</td>" in html and "<td>3/4</td>" in html
 
-print("Six localized pages, both hosting paths, all internal links, and published evidence verified.")
+print("Ten localized pages, both hosting paths, all internal links, and published evidence verified.")

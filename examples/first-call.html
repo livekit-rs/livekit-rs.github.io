@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>livekit-rs first call</title>
+<link rel="icon" href="data:,">
+<style>
+  body { font: 1rem system-ui, sans-serif; margin: 2rem auto; max-width: 48rem; padding: 0 1rem; }
+  label { display: grid; gap: .3rem; margin: .8rem 0; }
+  input, button { font: inherit; padding: .45rem; }
+  video { display: inline-block; max-width: 100%; width: 22rem; background: #191919; }
+</style>
+<h1>First call / 第一次通话</h1>
+<form id="join-form">
+  <label>Server URL / 服务地址 <input id="server-url" value="ws://127.0.0.1:7880" required></label>
+  <label>Room token / 入房令牌 <input id="token" type="password" autocomplete="off" required></label>
+  <button id="join">Join / 加入</button>
+  <button id="publish" type="button" disabled>Enable camera and microphone / 开启摄像头和麦克风</button>
+  <button id="audio" type="button" disabled>Play audio / 播放声音</button>
+  <button id="leave" type="button" disabled>Leave / 离开</button>
+</form>
+<p id="status" role="status">Disconnected / 未连接</p>
+<h2>Local video / 本地视频</h2>
+<div id="local"></div>
+<h2>Remote media / 远端媒体</h2>
+<div id="remote"></div>
+<script src="./node_modules/livekit-client/dist/livekit-client.umd.js"></script>
+<script type="module">
+  const { Room, RoomEvent, Track } = window.LivekitClient;
+
+  const room = new Room();
+  const form = document.querySelector('#join-form');
+  const url = document.querySelector('#server-url');
+  const token = document.querySelector('#token');
+  const status = document.querySelector('#status');
+  const join = document.querySelector('#join');
+  const publish = document.querySelector('#publish');
+  const audio = document.querySelector('#audio');
+  const leave = document.querySelector('#leave');
+  const local = document.querySelector('#local');
+  const remote = document.querySelector('#remote');
+
+  room.on(RoomEvent.TrackSubscribed, (track) => remote.append(track.attach()));
+  room.on(RoomEvent.TrackUnsubscribed, (track) => {
+    for (const element of track.detach()) element.remove();
+  });
+  room.on(RoomEvent.Disconnected, () => {
+    local.replaceChildren();
+    remote.replaceChildren();
+    join.disabled = false;
+    publish.disabled = audio.disabled = leave.disabled = true;
+    status.textContent = 'Disconnected / 未连接';
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    join.disabled = true;
+    status.textContent = 'Connecting… / 正在连接…';
+    try {
+      await room.connect(url.value.trim(), token.value.trim());
+      token.value = '';
+      publish.disabled = audio.disabled = leave.disabled = false;
+      status.textContent = `Connected to ${room.name} as ${room.localParticipant.identity}`;
+    } catch (error) {
+      join.disabled = false;
+      status.textContent = `Join failed / 加入失败 — ${error.message}`;
+    }
+  });
+
+  publish.addEventListener('click', async () => {
+    publish.disabled = true;
+    try {
+      await room.localParticipant.enableCameraAndMicrophone();
+      const track = room.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
+      if (track) {
+        const video = track.attach();
+        video.muted = true;
+        local.replaceChildren(video);
+      }
+      status.textContent = 'Camera and microphone enabled / 摄像头和麦克风已开启';
+    } catch (error) {
+      publish.disabled = false;
+      status.textContent = `Media failed / 媒体启动失败 — ${error.message}`;
+    }
+  });
+  audio.addEventListener('click', async () => {
+    try {
+      await room.startAudio();
+    } catch (error) {
+      status.textContent = `Audio failed / 声音播放失败 — ${error.message}`;
+    }
+  });
+  leave.addEventListener('click', () => room.disconnect());
+</script>
+</html>

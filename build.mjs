@@ -8,7 +8,7 @@ const output = join(site, 'dist');
 const origin = 'https://livekit-rs.com/';
 const locales = {
   en: {
-    route: '', name: 'English', home: 'Home', guides: 'Guides', compatibility: 'Compatibility',
+    route: '', name: 'English', home: 'Home', guides: 'Quickstart', cli: 'CLI', sdk: 'SDKs', compatibility: 'Compatibility',
     skip: 'Skip to content', nav: 'Main navigation', contents: 'On this page',
     subtitle: 'Single-node WebRTC server',
     headline: 'Real-time media.\nBuilt in Rust.',
@@ -27,7 +27,7 @@ const locales = {
     baseline: 'Go reference', footer: 'Single-node WebRTC server in Rust',
   },
   'zh-Hans': {
-    route: 'zh-hans/', name: '简体中文', home: '首页', guides: '使用指南', compatibility: '兼容性',
+    route: 'zh-hans/', name: '简体中文', home: '首页', guides: '快速开始', cli: 'CLI', sdk: 'SDK 接入', compatibility: '兼容性',
     skip: '跳到正文', nav: '主导航', contents: '本页目录',
     subtitle: '单节点 WebRTC 服务器',
     headline: '实时媒体，\n用 Rust 构建。',
@@ -47,7 +47,7 @@ const locales = {
   },
 };
 
-const pages = ['', 'guides', 'compatibility'];
+const pages = ['', 'guides', 'cli', 'sdk', 'compatibility'];
 const route = (lang, page) => locales[lang].route + (page ? page + '/' : '');
 const url = (from, to) => (relative(from || '.', to || '.').split(sep).join('/') || '.') + '/';
 const escape = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
@@ -73,6 +73,8 @@ function home(lang) {
 }
 
 const downloads = {
+  '../examples/first-call.html': 'downloads/first-call.html',
+  '../examples/server-sdk.mjs': 'downloads/server-sdk.mjs',
   '../examples/standalone.yaml': 'downloads/standalone.yaml',
   '../examples/livecloud.service': 'downloads/livecloud.service',
   '../examples/native-tls.md': 'downloads/native-tls.md',
@@ -91,12 +93,15 @@ async function document(lang, page) {
   renderer.link = function (token) {
     const href = token.href;
     const [path, fragment] = href.split('#', 2);
-    const doc = /^(guides|compatibility)\.(en|zh-Hans)\.md$/.exec(path);
+    const doc = /^(guides|cli|sdk|compatibility)\.(en|zh-Hans)\.md$/.exec(path);
     let target;
     if (doc) target = url(from, route(doc[2], doc[1]));
     else if (downloads[path]) target = url(from, dirname(downloads[path])) + downloads[path].split('/').pop();
     else if (path.startsWith('../evidence/')) target = url(from, 'evidence') + path.split('/').pop();
     if (target) token = { ...token, href: target + (fragment ? '#' + fragment : '') };
+    if (path === '../examples/first-call.html' || path === '../examples/server-sdk.mjs') {
+      return `<a href="${escape(token.href)}" download>${this.parser.parseInline(token.tokens)}</a>`;
+    }
     return Renderer.prototype.link.call(this, token);
   };
   const parser = new Marked({ renderer });

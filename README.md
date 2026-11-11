@@ -17,4 +17,4 @@ In the repository's **Settings → Pages**, select **GitHub Actions** as the bui
 To serve the optional `www` alias, point its `CNAME` at `livekit-rs.github.io`.
 Enable HTTPS after GitHub confirms DNS and issues the certificate. The relative navigation also works at the default GitHub Pages organization URL.
 
-The Website workflow builds and checks the static site, then publishes `dist` on `main`. The artifact includes the six localized pages, styles, public deployment examples, and selected comparison evidence. See the [GitHub Pages custom-domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+The Website workflow builds and checks the static site, then publishes `dist` on `main`. The artifact includes the localized quickstart, CLI and SDK guides, downloadable examples, and selected comparison evidence. See the [GitHub Pages custom-domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).

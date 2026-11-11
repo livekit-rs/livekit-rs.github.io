@@ -1,55 +1,44 @@
-# User guides
+# Start with livekit-rs
 
-Build, connect, and operate a single livekit-rs node.
+Build a local server, then make a first call between two browser tabs. You can follow these steps with no LiveKit account or previous LiveKit experience.
+
+## What you will use
+
+A **room** is where people meet. A **participant** joins the room with a unique identity. A **track** carries one microphone, camera, or screen stream. The server forwards published tracks to participants that subscribe to them.
+
+| Tool | What it does |
+| --- | --- |
+| `livekit-server` | Runs the Rust server on your computer. |
+| `lk` | Creates rooms, lists participants and generates local test tokens. |
+| Client SDK | Connects an app to a room and sends or receives media. |
+| Server SDK | Signs room tokens and calls management APIs from your backend. |
 
 ## Build and run locally
 
-Install Rust with rustup. Run these commands at the source root. The toolchain file selects Rust 1.99.0 and the lockfile pins build dependencies.
+Install [Git](https://git-scm.com/install), [Rust through rustup](https://rustup.rs/), and your system's C linker (Xcode Command Line Tools on macOS or your Linux distribution's build tools). Run these commands in a terminal:
 
 ```sh
+git clone https://github.com/livekit-rs/livekit-rs.git
+cd livekit-rs
 cargo build --locked --release -p livecloud --bin livekit-server
 ./target/release/livekit-server --dev --bind 127.0.0.1
 ```
 
-In a second terminal, check readiness and create an access token. Use a different identity for each participant.
+The repository selects the required Rust toolchain. The first build downloads dependencies and may take a few minutes. Leave the server running. In a second terminal, check the HTTP endpoint:
 
 ```sh
 curl --fail http://127.0.0.1:7880/
-./target/release/livekit-server --dev create-join-token --room demo --identity alice
 ```
 
-Development mode uses the public test credentials `devkey` and `secret` when keys are absent. Use the development token only on a local instance.
+Expect `OK`. If a port is already in use, stop the other service or launch this server with `--port 17880 --rtc.tcp_port 17881 --udp-port 17882` added to the startup command. Use the new HTTP and WebSocket port in the remaining steps.
+
+Development mode uses the public test credentials `devkey` and `secret`. Use them only for this local exercise.
 
 ## Connect with a LiveKit SDK
 
-Configure your client with `ws://127.0.0.1:7880` for local testing or your HTTPS-protected `wss://` endpoint for deployment. Issue room tokens on a trusted backend. Grant only the needed permissions and keep the API secret on the backend. The Node.js example signs a short-lived token for one room. Your backend should derive the room and identity from the authenticated request.
-
-```ts
-import { AccessToken } from 'livekit-server-sdk';
-
-const key = process.env.LIVEKIT_API_KEY;
-const secret = process.env.LIVEKIT_API_SECRET;
-if (!key || !secret) throw new Error('Missing LiveKit credentials');
-
-const token = new AccessToken(key, secret, { identity: 'alice', ttl: '10m' });
-token.addGrant({ roomJoin: true, room: 'demo', canPublish: true, canSubscribe: true });
-const jwt = await token.toJwt();
-```
-
-Return the token to your client and attach subscribed tracks.
-
-```ts
-import { Room, RoomEvent } from 'livekit-client';
-
-const room = new Room({ adaptiveStream: true, dynacast: true });
-room.on(RoomEvent.TrackSubscribed, (track) => {
-  document.body.append(track.attach());
-});
-await room.connect(serverUrl, jwt);
-await room.localParticipant.enableCameraAndMicrophone();
-```
-
-Camera and microphone access require browser permission and a secure context. Test with two identities to confirm publication and subscription in both directions. SDK compatibility depends on the exact workflow. See the [comparison](compatibility.en.md) before migrating.
+1. Follow the [CLI guide](cli.en.md) to install `lk`, create a room called `demo`, and issue separate tokens for Alice and Bob.
+2. Follow the [SDK guide](sdk.en.md) to open the same room in two browser tabs, publish from one, and watch the other receive video.
+3. When finished, leave both tabs and stop the server with Ctrl+C. The SDK guide also shows how a Node.js backend can issue tokens and list rooms.
 
 ## Deploy a single node
 

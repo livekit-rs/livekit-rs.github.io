@@ -1,55 +1,44 @@
-# 使用指南
+# 从零开始使用 livekit-rs
 
-构建、接入和运维一个 livekit-rs 节点。
+先在本机启动 Rust 服务，再用两个浏览器标签页完成第一次通话。跟着步骤操作即可，无需注册 LiveKit 账号，也无需事先了解 LiveKit。
+
+## 会用到什么
+
+**房间**是通话发生的地方。每个**参与者**用独立的身份加入房间。一条**媒体轨道**承载一路麦克风、摄像头或屏幕画面。服务器把发布的轨道转发给订阅它的参与者。
+
+| 工具 | 用途 |
+| --- | --- |
+| `livekit-server` | 在你的电脑上运行 Rust 服务。 |
+| `lk` | 创建房间、查询参与者、生成本地测试令牌。 |
+| 客户端 SDK | 让应用加入房间、收发音视频。 |
+| 服务端 SDK | 让后端签发入房令牌、调用管理 API。 |
 
 ## 本地构建与启动
 
-使用 rustup 安装 Rust，并在源码根目录执行命令。工具链文件固定 Rust 1.99.0，构建依赖由锁文件固定。
+安装 [Git](https://git-scm.com/install)、[Rust 工具链](https://rustup.rs/)和系统链接器。macOS 可安装 Xcode Command Line Tools，Linux 可安装发行版提供的 C 构建工具。在终端运行：
 
 ```sh
+git clone https://github.com/livekit-rs/livekit-rs.git
+cd livekit-rs
 cargo build --locked --release -p livecloud --bin livekit-server
 ./target/release/livekit-server --dev --bind 127.0.0.1
 ```
 
-在另一个终端检查就绪状态并生成令牌。每位参与者需要不同的 identity。
+仓库会选择所需的 Rust 工具链。首次构建需要下载依赖，可能耗时几分钟。保持服务运行，再打开一个终端检查 HTTP 端口：
 
 ```sh
 curl --fail http://127.0.0.1:7880/
-./target/release/livekit-server --dev create-join-token --room demo --identity alice
 ```
 
-未配置密钥时，开发模式使用公开的测试凭据 `devkey` 和 `secret`。开发令牌仅供本机实例使用。
+看到 `OK` 即可继续。如果端口已被占用，可停止占用端口的服务，或在启动命令末尾加上 `--port 17880 --rtc.tcp_port 17881 --udp-port 17882`。之后的 HTTP 和 WebSocket 地址都要改用新的服务端口。
 
-## 使用 LiveKit SDK 接入
+开发模式使用公开测试凭据 `devkey` 和 `secret`，仅用于本机练习。
 
-本地开发使用 `ws://127.0.0.1:7880`，部署时使用受 HTTPS 保护的 `wss://` 地址。在可信后端签发入房令牌，按需授权，并将 API Secret 保留在后端。以下 Node.js 示例为一个房间签发短期令牌。后端应根据已鉴权的请求确定房间和用户身份。
+## 用 LiveKit SDK 接入
 
-```ts
-import { AccessToken } from 'livekit-server-sdk';
-
-const key = process.env.LIVEKIT_API_KEY;
-const secret = process.env.LIVEKIT_API_SECRET;
-if (!key || !secret) throw new Error('Missing LiveKit credentials');
-
-const token = new AccessToken(key, secret, { identity: 'alice', ttl: '10m' });
-token.addGrant({ roomJoin: true, room: 'demo', canPublish: true, canSubscribe: true });
-const jwt = await token.toJwt();
-```
-
-将令牌返回客户端，然后接入房间并播放订阅的媒体轨道。
-
-```ts
-import { Room, RoomEvent } from 'livekit-client';
-
-const room = new Room({ adaptiveStream: true, dynacast: true });
-room.on(RoomEvent.TrackSubscribed, (track) => {
-  document.body.append(track.attach());
-});
-await room.connect(serverUrl, jwt);
-await room.localParticipant.enableCameraAndMicrophone();
-```
-
-摄像头和麦克风需要浏览器授权和安全上下文。使用两个身份验证双向发布和订阅。SDK 兼容性取决于具体工作流，迁移前请查看[对照结果](compatibility.zh-Hans.md)。
+1. 按 [CLI 指南](cli.zh-Hans.md)安装 `lk`，创建 `demo` 房间，为 Alice 和 Bob 分别签发令牌。
+2. 按 [SDK 指南](sdk.zh-Hans.md)用两个浏览器标签页加入同一房间，从一个标签页发布视频，在另一个标签页接收。
+3. 测试完成后退出两个标签页，在终端按 Ctrl+C 停止服务。SDK 指南还演示了如何用 Node.js 后端签发令牌和查询房间。
 
 ## 单机部署
 
