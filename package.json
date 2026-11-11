@@ -1,0 +1,12 @@
+{
+  "name": "livekit-rs-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "python3 check.py"
+  },
+  "dependencies": {
+    "marked": "18.2.0"
+  }
+}

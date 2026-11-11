@@ -1,0 +1,134 @@
+{
+  "campaign_date": "2026-11-11",
+  "scope": "Isolated Linux IPv4 NAT, port-preserving mapping, dedicated UDP, unchanged Go SDK, 24-second bidirectional interruption",
+  "official_baseline": {
+    "version": "v1.13.10",
+    "source_commit": "e5655ac20267fa5005dccaf3f0e3bfc3ea688c07",
+    "binary_sha256": "dcd9ebd2fedc93894dbc631cc7df55eb7d34e3c5269bec2d1fe4668e61803ac8"
+  },
+  "rust_candidate": {
+    "source_commit_at_execution": "cbfc2d551869defbce841e9ca2064dde93cf20b4",
+    "server_tree_at_execution": "be47ff66f4e321dc917465537f483cafa9a2c77c",
+    "binary_sha256": "da5fb77e00b16f10febd99e580818c4cb081d05ad4ed1b058436cfbdd548c82a"
+  },
+  "sdk": {
+    "version": "v2.18.2-0.20260924203949-34edb5522fd9",
+    "probe_binary_sha256": "c0ac25ba83397a8a4ad18506b262f87422135c8cb630cfc3f5033c48aa9860a2"
+  },
+  "initial_cases": {
+    "go-single": {
+      "result": "pass",
+      "selected_udp_paths": 2,
+      "gateway_dropped_packets": [
+        41,
+        43
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    },
+    "go-dual": {
+      "result": "pass",
+      "selected_udp_paths": 4,
+      "gateway_dropped_packets": [
+        61,
+        59
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    },
+    "rust-single": {
+      "result": "initial_join_failed",
+      "sdk_exit": 1,
+      "blackout_executed": false
+    },
+    "rust-dual": {
+      "result": "pass",
+      "selected_udp_paths": 4,
+      "gateway_dropped_packets": [
+        96,
+        57
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    }
+  },
+  "repeat_cases": {
+    "go-single-1": {
+      "result": "pass",
+      "selected_udp_paths": 2,
+      "gateway_dropped_packets": [
+        46,
+        44
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    },
+    "go-single-2": {
+      "result": "pass",
+      "selected_udp_paths": 2,
+      "gateway_dropped_packets": [
+        46,
+        44
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    },
+    "rust-single-1": {
+      "result": "pass",
+      "selected_udp_paths": 2,
+      "gateway_dropped_packets": [
+        112,
+        44
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    },
+    "rust-single-2": {
+      "result": "pass",
+      "selected_udp_paths": 2,
+      "gateway_dropped_packets": [
+        112,
+        44
+      ],
+      "replaced_sessions_after_cut": [
+        "nat-a",
+        "nat-b"
+      ],
+      "rebound_ports": 1024
+    }
+  },
+  "physical_interface_control": {
+    "scope": "macOS explicit physical IPv4 node address, dual PeerConnection, ICE restart and port rebind",
+    "official_binary_sha256": "4bc2378e636740b29093061036249ffc9ebbef91f4ece1de12177c8dfee1e7dc",
+    "rust_binary_sha256": "6480e9dfb23c1c882a6afdb3bfe924a04154b947faf08b380b9ff7383a555b84",
+    "counts": {
+      "go": {
+        "passed": 4,
+        "failed": 0
+      },
+      "rust": {
+        "passed": 4,
+        "failed": 0
+      }
+    },
+    "failures": []
+  }
+}
