@@ -2,6 +2,17 @@
 
 **客户端 SDK** 负责加入房间、发布本地音视频，以及订阅其他参与者的媒体轨道。**服务端 SDK** 在后端签发令牌和调用管理 API。浏览器只需要 WebSocket 地址和入房令牌。
 
+## 选择平台教程
+
+选择一个客户端，再用第二位参与者确认音视频确实收到。每篇教程都提供可下载的完整示例。
+
+| 平台 | 教程 |
+| --- | --- |
+| React | [用 React 实现浏览器通话](sdk-react.zh-Hans.md) |
+| Android | [用 Kotlin 实现 Android 通话](sdk-android.zh-Hans.md) |
+| iOS | [用 SwiftUI 实现 iOS 通话](sdk-ios.zh-Hans.md) |
+| Flutter | [用 Flutter 实现通话](sdk-flutter.zh-Hans.md) |
+
 ## 用两个浏览器标签页完成第一次通话
 
 按[快速开始](guides.zh-Hans.md)启动 Rust 服务，再按 [CLI 指南](cli.zh-Hans.md)创建 `demo` 房间并生成两个令牌。两个令牌要使用不同的参与者身份。准备 Node.js、npm、Python 3，以及可以使用摄像头和麦克风的浏览器。
@@ -39,7 +50,7 @@ node server-sdk.mjs token alice
 
 ## 选择客户端或后端 SDK
 
-不同客户端使用相同的入房令牌和可达的 WebSocket 地址。后端使用 HTTP 或 HTTPS API 地址及 API 凭据。上面的示例覆盖浏览器和 Node.js。使用其他 SDK 时，按对应文档安装，并结合[已发布的兼容性结果](compatibility.zh-Hans.md)验证你的应用。
+每个客户端都需要自己的入房令牌和可达的 WebSocket 地址。后端使用 HTTP 或 HTTPS API 地址及 API 凭据。上面的示例覆盖浏览器和 Node.js。使用其他 SDK 时，按对应文档安装，并结合[已发布的兼容性结果](compatibility.zh-Hans.md)验证你的应用。
 
 | 应用类型 | SDK 和接入参考 |
 | --- | --- |

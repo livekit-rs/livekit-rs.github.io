@@ -47,7 +47,15 @@ const locales = {
   },
 };
 
-const pages = ['', 'guides', 'cli', 'sdk', 'compatibility'];
+const navigation = ['', 'guides', 'cli', 'sdk', 'compatibility'];
+const tutorials = {
+  'sdk/react': 'React',
+  'sdk/android': 'Android',
+  'sdk/ios': 'iOS',
+  'sdk/flutter': 'Flutter',
+};
+const pages = [...navigation, ...Object.keys(tutorials)];
+const pageFiles = new Map(pages.slice(1).map((page) => [page.replaceAll('/', '-'), page]));
 const route = (lang, page) => locales[lang].route + (page ? page + '/' : '');
 const url = (from, to) => (relative(from || '.', to || '.').split(sep).join('/') || '.') + '/';
 const escape = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
@@ -73,6 +81,10 @@ function home(lang) {
 }
 
 const downloads = {
+  '../examples/FirstCall.jsx': 'downloads/FirstCall.jsx',
+  '../examples/MainActivity.kt': 'downloads/MainActivity.kt',
+  '../examples/ContentView.swift': 'downloads/ContentView.swift',
+  '../examples/main.dart': 'downloads/main.dart',
   '../examples/first-call.html': 'downloads/first-call.html',
   '../examples/server-sdk.mjs': 'downloads/server-sdk.mjs',
   '../examples/standalone.yaml': 'downloads/standalone.yaml',
@@ -81,7 +93,7 @@ const downloads = {
 };
 
 async function document(lang, page) {
-  const source = await readFile(join(site, 'content', `${page}.${lang}.md`), 'utf8');
+  const source = await readFile(join(site, 'content', `${page.replaceAll('/', '-')}.${lang}.md`), 'utf8');
   const from = route(lang, page);
   const headings = [];
   const renderer = new Renderer();
@@ -93,13 +105,13 @@ async function document(lang, page) {
   renderer.link = function (token) {
     const href = token.href;
     const [path, fragment] = href.split('#', 2);
-    const doc = /^(guides|cli|sdk|compatibility)\.(en|zh-Hans)\.md$/.exec(path);
+    const doc = /^([a-z-]+)\.(en|zh-Hans)\.md$/.exec(path);
     let target;
-    if (doc) target = url(from, route(doc[2], doc[1]));
+    if (doc && pageFiles.has(doc[1])) target = url(from, route(doc[2], pageFiles.get(doc[1])));
     else if (downloads[path]) target = url(from, dirname(downloads[path])) + downloads[path].split('/').pop();
     else if (path.startsWith('../evidence/')) target = url(from, 'evidence') + path.split('/').pop();
     if (target) token = { ...token, href: target + (fragment ? '#' + fragment : '') };
-    if (path === '../examples/first-call.html' || path === '../examples/server-sdk.mjs') {
+    if (downloads[path] && /\.(html|mjs|jsx|kt|swift|dart)$/.test(path)) {
       return `<a href="${escape(token.href)}" download>${this.parser.parseInline(token.tokens)}</a>`;
     }
     return Renderer.prototype.link.call(this, token);
@@ -114,7 +126,7 @@ function shell(lang, page, body) {
   const t = locales[lang];
   const from = route(lang, page);
   const other = lang === 'en' ? 'zh-Hans' : 'en';
-  const title = page ? `${t[page]} | livekit-rs` : 'livekit-rs';
+  const title = page ? `${t[page] ?? tutorials[page]} | livekit-rs` : 'livekit-rs';
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -130,7 +142,7 @@ ${Object.keys(locales).map((id) => `<link rel="alternate" hreflang="${id}" href=
 <body>
 <a class="skip" href="#main">${t.skip}</a>
 <header><div class="bar"><a class="brand" href="${url(from, route(lang, ''))}"><span aria-hidden="true">◈</span> livekit-rs</a>
-<nav aria-label="${t.nav}">${pages.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : ''}>${t[item || 'home']}</a>`).join('')}</nav>
+<nav aria-label="${t.nav}">${navigation.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : item === 'sdk' && tutorials[page] ? ' aria-current="true"' : ''}>${t[item || 'home']}</a>`).join('')}</nav>
 <a class="language" href="${url(from, route(other, page))}" lang="${other}" hreflang="${other}">${locales[other].name}</a></div></header>
 <main id="main" class="wrap">${body}</main>
 <footer class="wrap"><span>livekit-rs</span><span>${t.footer}</span></footer>

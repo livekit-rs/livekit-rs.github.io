@@ -2,6 +2,17 @@
 
 A **client SDK** joins a room, publishes local audio and video, and subscribes to other participants' tracks. A **server SDK** runs on your backend, signs access tokens and calls administrative APIs. The browser only needs the WebSocket URL and a room token.
 
+## Start a platform tutorial
+
+Pick a client and use a second participant to check that media arrives. Each walkthrough includes a complete example to download.
+
+| Platform | Walkthrough |
+| --- | --- |
+| React | [Build a browser call with React](sdk-react.en.md) |
+| Android | [Build a Kotlin Android call](sdk-android.en.md) |
+| iOS | [Build a SwiftUI call](sdk-ios.en.md) |
+| Flutter | [Build a Flutter call](sdk-flutter.en.md) |
+
 ## Make a call in two browser tabs
 
 Start the Rust server with the [quickstart](guides.en.md), then create the `demo` room and two tokens by following the [CLI guide](cli.en.md). Each token must use a different identity. Have Node.js with npm, Python 3, and a browser with a camera and microphone available.
@@ -39,7 +50,7 @@ For an application, use an authenticated backend route. Derive the identity from
 
 ## Choose a client or backend SDK
 
-Use the same room token and reachable WebSocket URL across client SDKs. Use the HTTP or HTTPS API endpoint with your API key and secret on the backend. The examples above cover the browser and Node.js workflows. For other clients, follow the SDK's setup instructions and verify your application against the [published compatibility results](compatibility.en.md).
+Use a participant token and a reachable WebSocket URL with each client SDK. Use the HTTP or HTTPS API endpoint with your API key and secret on the backend. The examples above cover the browser and Node.js workflows. For other clients, follow the SDK's setup instructions and verify your application against the [published compatibility results](compatibility.en.md).
 
 | Building | SDK and integration reference |
 | --- | --- |

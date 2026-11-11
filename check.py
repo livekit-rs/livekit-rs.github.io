@@ -8,7 +8,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 DIST = Path(__file__).resolve().parent / "dist"
 ROOT = DIST.parent
-PAGE_ROUTES = ("", "guides/", "cli/", "sdk/", "compatibility/")
+PAGE_ROUTES = ("", "guides/", "cli/", "sdk/", "sdk/react/", "sdk/android/", "sdk/ios/", "sdk/flutter/", "compatibility/")
 LOCALES = {"": "en", "zh-hans/": "zh-Hans"}
 FORBIDDEN = re.compile(r"livekit-platform|livekit-docs|netonlive|spec-?0078", re.I)
 
@@ -59,6 +59,23 @@ for locale, language in LOCALES.items():
                 if resolved.fragment:
                     assert unquote(resolved.fragment) in Page(target).ids, (base, href)
 
+TUTORIAL_EXAMPLES = {
+    "react": "FirstCall.jsx",
+    "android": "MainActivity.kt",
+    "ios": "ContentView.swift",
+    "flutter": "main.dart",
+}
+
+for tutorial, filename in TUTORIAL_EXAMPLES.items():
+    assert (DIST / "downloads" / filename).read_bytes() == (ROOT / "examples" / filename).read_bytes()
+    for locale in LOCALES:
+        route = f"{locale}sdk/{tutorial}/"
+        page = (DIST / route / "index.html").read_text()
+        assert f'/downloads/{filename}" download>' in page
+        alternate = "zh-hans/" if locale == "" else ""
+        assert f'https://livekit-rs.com/{alternate}sdk/{tutorial}/"' in page
+        assert "lk token create --join --room demo" in page
+
 receipt = json.loads((DIST / "evidence/nat-recovery-2026-11-11.json").read_text())
 cases = {**receipt["initial_cases"], **receipt["repeat_cases"]}
 for side, expected in (("go", (4, 4)), ("rust", (3, 4))):
@@ -72,4 +89,4 @@ for path in (DIST / "compatibility/index.html", DIST / "zh-hans/compatibility/in
     html = path.read_text()
     assert "<td>4/4</td>" in html and "<td>3/4</td>" in html
 
-print("Ten localized pages, both hosting paths, all internal links, and published evidence verified.")
+print("Localized pages, both hosting paths, all internal links, and published evidence verified.")
