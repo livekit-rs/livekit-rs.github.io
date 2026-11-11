@@ -11,7 +11,7 @@ brew install livekit-cli
 lk --version
 ```
 
-按[快速开始](guides.zh-Hans.md)启动 Rust 服务。在第二个终端配置本地开发凭据。CLI 调用 API 时使用 HTTP 地址，浏览器入房时使用 WebSocket 地址。
+按[快速开始](guides-build-locally.zh-Hans.md)启动 Rust 服务。在第二个终端配置本地开发凭据。CLI 调用 API 时使用 HTTP 地址，浏览器入房时使用 WebSocket 地址。
 
 ```sh
 export LIVEKIT_URL=http://127.0.0.1:7880

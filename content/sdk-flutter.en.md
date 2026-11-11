@@ -2,7 +2,7 @@
 
 ## Start livekit-rs and get two tokens
 
-Start livekit-rs in development mode using the [quickstart](guides.en.md). In another terminal with [the official CLI](cli.en.md) installed, run:
+Start livekit-rs in development mode using the [quickstart](guides-build-locally.en.md). In another terminal with [the official CLI](cli.en.md) installed, run:
 
 ```sh
 export LIVEKIT_URL=http://127.0.0.1:7880

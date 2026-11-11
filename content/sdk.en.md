@@ -15,7 +15,7 @@ Pick a client and use a second participant to check that media arrives. Each wal
 
 ## Make a call in two browser tabs
 
-Start the Rust server with the [quickstart](guides.en.md), then create the `demo` room and two tokens by following the [CLI guide](cli.en.md). Each token must use a different identity. Have Node.js with npm, Python 3, and a browser with a camera and microphone available.
+Start the Rust server with the [quickstart](guides-build-locally.en.md), then create the `demo` room and two tokens by following the [CLI guide](cli.en.md). Each token must use a different identity. Have Node.js with npm, Python 3, and a browser with a camera and microphone available.
 
 Create a working folder and save the [browser example](../examples/first-call.html) into it as `first-call.html`. Run these commands from that folder:
 

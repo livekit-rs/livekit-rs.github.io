@@ -4,12 +4,18 @@ import json
 from html.parser import HTMLParser
 from pathlib import Path
 import re
+from xml.etree import ElementTree
 from urllib.parse import unquote, urljoin, urlsplit
 
 DIST = Path(__file__).resolve().parent / "dist"
 ROOT = DIST.parent
-PAGE_ROUTES = ("", "guides/", "cli/", "sdk/", "sdk/react/", "sdk/android/", "sdk/ios/", "sdk/flutter/", "compatibility/")
+GUIDE_ROUTES = (
+    "guides/", "guides/concepts/", "guides/build-locally/", "guides/connect-sdk/",
+    "guides/deploy/", "guides/configuration/", "guides/migration/", "guides/troubleshooting/",
+)
+PAGE_ROUTES = ("", "cli/", "sdk/", "sdk/react/", "sdk/android/", "sdk/ios/", "sdk/flutter/", "compatibility/", *GUIDE_ROUTES)
 LOCALES = {"": "en", "zh-hans/": "zh-Hans"}
+ORIGIN = "https://livekit-rs.com/"
 FORBIDDEN = re.compile(r"livekit-platform|livekit-docs|netonlive|spec-?0078", re.I)
 
 
@@ -20,12 +26,24 @@ class Page(HTMLParser):
         self.ids = set()
         self.refs = []
         self.headings = 0
+        self.in_guide_menu = False
+        self.guide_links = []
+        self.canonical = None
+        self.alternates = {}
         self.feed(path.read_text())
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag == "html":
             self.lang = attrs.get("lang")
+        if tag == "aside":
+            self.in_guide_menu = attrs.get("class") == "guide-menu"
+        if tag == "a" and self.in_guide_menu:
+            self.guide_links.append((attrs["href"], attrs.get("aria-current")))
+        if tag == "link" and attrs.get("rel") == "canonical":
+            self.canonical = attrs["href"]
+        if tag == "link" and attrs.get("rel") == "alternate":
+            self.alternates[attrs["hreflang"]] = attrs["href"]
         if tag == "h1":
             self.headings += 1
         if "id" in attrs:
@@ -33,6 +51,10 @@ class Page(HTMLParser):
             self.ids.add(attrs["id"])
         if "href" in attrs:
             self.refs.append(attrs["href"])
+
+    def handle_endtag(self, tag):
+        if tag == "aside":
+            self.in_guide_menu = False
 
 
 for path in [ROOT / "README.md", *DIST.rglob("*")]:
@@ -44,6 +66,21 @@ for locale, language in LOCALES.items():
         relative_route = locale + route
         page = Page(DIST / relative_route / "index.html")
         assert page.lang == language and page.headings == 1 and "main" in page.ids
+        assert page.canonical == f"{ORIGIN}{relative_route}"
+        assert page.alternates == {
+            "en": f"{ORIGIN}{route}",
+            "zh-Hans": f"{ORIGIN}zh-hans/{route}",
+            "x-default": f"{ORIGIN}{route}",
+        }
+        if route in GUIDE_ROUTES:
+            links = [
+                (urljoin(page.canonical, href), current)
+                for href, current in page.guide_links
+            ]
+            assert links == [
+                (f"{ORIGIN}{locale}{target}", "page" if target == route else None)
+                for target in GUIDE_ROUTES
+            ], (relative_route, links)
         for prefix in ("", "livekit-rs/"):
             base = f"https://example.test/{prefix}{relative_route}"
             for href in page.refs:
@@ -58,6 +95,16 @@ for locale, language in LOCALES.items():
                 assert target.is_file(), (base, href)
                 if resolved.fragment:
                     assert unquote(resolved.fragment) in Page(target).ids, (base, href)
+
+for locale in LOCALES:
+    home = (DIST / locale / "index.html").read_text()
+    assert 'class="open-source"' not in home
+    assert 'Apache-2.0' not in home.split("</main>")[0]
+
+sitemap = ElementTree.parse(DIST / "sitemap.xml")
+locations = [loc.text for loc in sitemap.findall(".//{*}loc")]
+assert sorted(locations) == sorted(f"{ORIGIN}{locale}{page}" for locale in LOCALES for page in PAGE_ROUTES)
+assert (DIST / "robots.txt").read_text() == f"Sitemap: {ORIGIN}sitemap.xml\n"
 
 TUTORIAL_EXAMPLES = {
     "react": "FirstCall.jsx",

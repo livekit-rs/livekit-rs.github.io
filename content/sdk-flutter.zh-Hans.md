@@ -2,7 +2,7 @@
 
 ## 启动 livekit-rs 并获取两个令牌
 
-按[快速开始](guides.zh-Hans.md)用开发模式启动 livekit-rs。在另一个已安装[官方 CLI](cli.zh-Hans.md) 的终端运行：
+按[快速开始](guides-build-locally.zh-Hans.md)用开发模式启动 livekit-rs。在另一个已安装[官方 CLI](cli.zh-Hans.md) 的终端运行：
 
 ```sh
 export LIVEKIT_URL=http://127.0.0.1:7880

@@ -15,7 +15,7 @@
 
 ## 用两个浏览器标签页完成第一次通话
 
-按[快速开始](guides.zh-Hans.md)启动 Rust 服务，再按 [CLI 指南](cli.zh-Hans.md)创建 `demo` 房间并生成两个令牌。两个令牌要使用不同的参与者身份。准备 Node.js、npm、Python 3，以及可以使用摄像头和麦克风的浏览器。
+按[快速开始](guides-build-locally.zh-Hans.md)启动 Rust 服务，再按 [CLI 指南](cli.zh-Hans.md)创建 `demo` 房间并生成两个令牌。两个令牌要使用不同的参与者身份。准备 Node.js、npm、Python 3，以及可以使用摄像头和麦克风的浏览器。
 
 新建一个工作目录，把[浏览器示例](../examples/first-call.html)保存到该目录，文件名为 `first-call.html`。在目录中运行：
 

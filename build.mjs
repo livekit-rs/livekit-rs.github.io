@@ -13,7 +13,8 @@ const locales = {
   en: {
     route: '', name: 'English', home: 'Home', guides: 'Quickstart', cli: 'CLI', sdk: 'SDKs', compatibility: 'Compatibility',
     skip: 'Skip to content', nav: 'Main navigation', contents: 'On this page',
-    openSource: 'Open source', source: 'View source on GitHub', issues: 'Report an issue',
+    guideDescription: 'Start a local livekit-rs server, connect a client SDK, and find guides for deployment and troubleshooting.',
+    guideNav: 'Guides', source: 'View source on GitHub', issues: 'Report an issue',
     headline: 'Real-time media.\nBuilt in Rust.',
     description: 'An open-source, single-node WebRTC server for audio, video, and data, targeting full compatibility with LiveKit Server v1.13.10.',
     start: 'Get started', compare: 'Compare with Go', pipeline: 'Media forwarding path',
@@ -32,7 +33,8 @@ const locales = {
   'zh-Hans': {
     route: 'zh-hans/', name: '简体中文', home: '首页', guides: '快速开始', cli: 'CLI', sdk: 'SDK 接入', compatibility: '兼容性',
     skip: '跳到正文', nav: '主导航', contents: '本页目录',
-    openSource: '开源项目', source: '在 GitHub 查看源码', issues: '反馈问题',
+    guideDescription: '从本地启动 livekit-rs 和接入客户端 SDK 开始，查看单机部署与故障排查指南。',
+    guideNav: '使用指南', source: '在 GitHub 查看源码', issues: '反馈问题',
     headline: '实时媒体，\n用 Rust 构建。',
     description: '转发实时音频、视频与数据的开源单节点 WebRTC 服务器，目标是与 LiveKit Server v1.13.10 完全兼容。',
     start: '快速开始', compare: '查看 Go 对照', pipeline: '媒体转发路径',
@@ -57,18 +59,49 @@ const tutorials = {
   'sdk/ios': 'iOS',
   'sdk/flutter': 'Flutter',
 };
-const pages = [...navigation, ...Object.keys(tutorials)];
+const guideChapters = {
+  'guides/concepts': {
+    en: ['What you will use', 'Learn how rooms, participants, and media tracks fit together in livekit-rs.'],
+    'zh-Hans': ['会用到什么', '了解 livekit-rs 的房间、参与者、媒体轨道和接入工具。'],
+  },
+  'guides/build-locally': {
+    en: ['Build and run locally', 'Build livekit-rs from source, start a local development server, and check that it is ready.'],
+    'zh-Hans': ['本地构建与启动', '从源码构建 livekit-rs，启动本地开发服务并检查服务是否就绪。'],
+  },
+  'guides/connect-sdk': {
+    en: ['Connect with a LiveKit SDK', 'Create a room and make a first livekit-rs call between two clients.'],
+    'zh-Hans': ['用 LiveKit SDK 接入', '创建房间，用两个客户端接入 livekit-rs 并完成第一次通话。'],
+  },
+  'guides/deploy': {
+    en: ['Deploy a single node', 'Deploy a livekit-rs node with a standalone configuration, TLS, and reachable WebRTC ports.'],
+    'zh-Hans': ['单机部署', '配置 livekit-rs 单节点、TLS 和 WebRTC 端口。'],
+  },
+  'guides/configuration': {
+    en: ['CLI and configuration', 'Inspect livekit-rs server flags and learn how YAML, flags, and environment variables are applied.'],
+    'zh-Hans': ['CLI 和配置', '查看 livekit-rs 服务端参数，了解 YAML、命令行选项和环境变量的使用方式。'],
+  },
+  'guides/migration': {
+    en: ['Check a migration', 'Verify your client SDK, media, and server API workflows before switching to livekit-rs.'],
+    'zh-Hans': ['验证迁移', '切换到 livekit-rs 前，验证客户端 SDK、音视频和服务端 API 的实际行为。'],
+  },
+  'guides/troubleshooting': {
+    en: ['Troubleshoot a call', 'Diagnose livekit-rs connection, authorization, media, and startup failures.'],
+    'zh-Hans': ['排查通话问题', '排查 livekit-rs 的连接、鉴权、音视频和启动问题。'],
+  },
+};
+const pages = [...navigation, ...Object.keys(tutorials), ...Object.keys(guideChapters)];
 const pageFiles = new Map(pages.slice(1).map((page) => [page.replaceAll('/', '-'), page]));
 const route = (lang, page) => locales[lang].route + (page ? page + '/' : '');
 const url = (from, to) => (relative(from || '.', to || '.').split(sep).join('/') || '.') + '/';
 const escape = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
   .replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
+const headingId = (label) => label.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-');
+
 function home(lang) {
   const t = locales[lang];
   const from = route(lang, '');
   return `<section class="hero"><div class="hero-copy">
-    <p class="open-source"><strong>${t.openSource}</strong><a href="${license}">Apache-2.0</a></p>
     <h1>${escape(t.headline).replaceAll('\n', '<br>')}</h1>
     <p class="lede">${t.description}</p>
     <div class="actions"><a class="button primary" href="${repository}">${t.source} <span aria-hidden="true">↗</span></a>
@@ -102,7 +135,7 @@ async function document(lang, page) {
   const headings = [];
   const renderer = new Renderer();
   renderer.heading = function ({ depth, text, tokens }) {
-    const id = text.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-');
+    const id = headingId(text);
     if (depth === 2) headings.push([id, text]);
     return `<h${depth} id="${escape(id)}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
   };
@@ -123,20 +156,39 @@ async function document(lang, page) {
   const parser = new Marked({ renderer });
   const body = parser.parse(source);
   const toc = headings.map(([id, label]) => `<li><a href="#${escape(id)}">${escape(label)}</a></li>`).join('');
-  return `<div class="docs-layout"><aside aria-label="${locales[lang].contents}"><p>${locales[lang].contents}</p><ul>${toc}</ul></aside><article class="prose">${body}</article></div>`;
+  const sidebar = page === 'guides' || guideChapters[page]
+    ? guideSidebar(lang, page, from)
+    : `<aside aria-label="${locales[lang].contents}"><p>${locales[lang].contents}</p><ul>${toc}</ul></aside>`;
+  return `<div class="docs-layout">${sidebar}<article class="prose">${body}</article></div>`;
+}
+
+function guideSidebar(lang, page, from) {
+  const label = locales[lang].guideNav;
+  const overview = [locales[lang].guides];
+  const menu = [['guides', overview], ...Object.entries(guideChapters).map(([path, labels]) => [path, labels[lang]])];
+  const links = menu.map(([path, [name]]) => {
+    const current = path === page ? ' aria-current="page"' : '';
+    // Old external bookmarks can still locate the corresponding chapter link.
+    const legacyId = page === 'guides' && path !== page ? ` id="${escape(headingId(name))}"` : '';
+    return `<li${legacyId}><a href="${url(from, route(lang, path))}"${current}>${escape(name)}</a></li>`;
+  }).join('');
+  return `<aside class="guide-menu" aria-label="${label}"><p>${label}</p><ul>${links}</ul></aside>`;
 }
 
 function shell(lang, page, body) {
   const t = locales[lang];
   const from = route(lang, page);
   const other = lang === 'en' ? 'zh-Hans' : 'en';
-  const title = page ? `${t[page] ?? tutorials[page]} | livekit-rs` : 'livekit-rs';
+  const chapter = guideChapters[page]?.[lang];
+  const title = page ? `${chapter?.[0] ?? t[page] ?? tutorials[page]} | livekit-rs` : 'livekit-rs';
+  const description = chapter?.[1] ?? (page === 'guides' ? t.guideDescription : t.description);
+  const section = page.split('/')[0];
   return `<!doctype html>
 <html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="${escape(t.description)}">
+<meta name="description" content="${escape(description)}">
 <title>${title}</title>
 <link rel="canonical" href="${origin}${from}">
 ${Object.keys(locales).map((id) => `<link rel="alternate" hreflang="${id}" href="${origin}${route(id, page)}">`).join('\n')}
@@ -146,7 +198,7 @@ ${Object.keys(locales).map((id) => `<link rel="alternate" hreflang="${id}" href=
 <body>
 <a class="skip" href="#main">${t.skip}</a>
 <header><div class="bar"><a class="brand" href="${url(from, route(lang, ''))}"><span aria-hidden="true">◈</span> livekit-rs</a>
-<nav aria-label="${t.nav}">${navigation.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : item === 'sdk' && tutorials[page] ? ' aria-current="true"' : ''}>${t[item || 'home']}</a>`).join('')}<a class="github-link" href="${repository}">GitHub <span aria-hidden="true">↗</span></a></nav>
+<nav aria-label="${t.nav}">${navigation.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : item === section ? ' aria-current="true"' : ''}>${t[item || 'home']}</a>`).join('')}<a class="github-link" href="${repository}">GitHub <span aria-hidden="true">↗</span></a></nav>
 <a class="language" href="${url(from, route(other, page))}" lang="${other}" hreflang="${other}">${locales[other].name}</a></div></header>
 <main id="main" class="wrap">${body}</main>
 <footer class="wrap"><span>livekit-rs</span><span>${t.footer}</span><div class="footer-links"><a href="${repository}">GitHub</a><a href="${license}">Apache-2.0</a><a href="${issues}">${t.issues}</a></div></footer>
@@ -168,3 +220,8 @@ for (const [source, target] of Object.entries(downloads)) {
   await cp(resolve(site, 'content', source), join(output, target));
 }
 await writeFile(join(output, '.nojekyll'), '');
+const sitemap = Object.keys(locales).flatMap((lang) => pages.map((page) =>
+  `  <url><loc>${origin}${route(lang, page)}</loc></url>`)).join('\n');
+await writeFile(join(output, 'sitemap.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap}\n</urlset>\n`);
+await writeFile(join(output, 'robots.txt'), `Sitemap: ${origin}sitemap.xml\n`);

@@ -11,7 +11,7 @@ brew install livekit-cli
 lk --version
 ```
 
-Start your Rust server with the [quickstart](guides.en.md). In a second terminal, direct the CLI to it using the local development credentials. The API uses an HTTP URL. Browsers use a WebSocket URL when they join the room.
+Start your Rust server with the [quickstart](guides-build-locally.en.md). In a second terminal, direct the CLI to it using the local development credentials. The API uses an HTTP URL. Browsers use a WebSocket URL when they join the room.
 
 ```sh
 export LIVEKIT_URL=http://127.0.0.1:7880

@@ -7,18 +7,10 @@
 @media(max-width:760px){.hero{grid-template-columns:1fr;padding:48px 0 36px}.cards{grid-template-columns:1fr}.docs-layout{grid-template-columns:1fr;gap:24px;padding:28px 0}.docs-layout aside{position:static;border-bottom:1px solid var(--edge);padding:0 0 18px}.docs-layout aside ul{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}}
 @media(max-width:480px){.wrap,.bar{width:calc(100% - 32px)}.bar{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 0}.language{grid-column:2;grid-row:1}nav{grid-column:1/-1;gap:3px 15px}.hero{padding-top:34px}.pipeline{padding:17px}.flow{gap:4px;font-size:.72rem}.evidence-band{grid-template-columns:1fr}.baseline{border:0;border-top:1px solid var(--edge);padding:10px 0 0}}
 
-.open-source {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  padding: 8px 13px;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  background: var(--panel);
+.guide-menu a[aria-current=page] {
+  color: var(--accent);
+  font-weight: 650;
 }
-.open-source strong { color: var(--accent); font-size: 1.05rem; }
-.open-source a { color: var(--text); font: .82rem var(--mono); }
 nav .github-link { color: var(--accent); font-weight: 700; }
 footer { flex-wrap: wrap; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }
