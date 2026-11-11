@@ -6,13 +6,16 @@ import { Marked, Renderer } from 'marked';
 const site = dirname(fileURLToPath(import.meta.url));
 const output = join(site, 'dist');
 const origin = 'https://livekit-rs.com/';
+const repository = 'https://github.com/livekit-rs/livekit-rs';
+const license = `${repository}/blob/main/LICENSE`;
+const issues = `${repository}/issues`;
 const locales = {
   en: {
     route: '', name: 'English', home: 'Home', guides: 'Quickstart', cli: 'CLI', sdk: 'SDKs', compatibility: 'Compatibility',
     skip: 'Skip to content', nav: 'Main navigation', contents: 'On this page',
-    subtitle: 'Single-node WebRTC server',
+    openSource: 'Open source', source: 'View source on GitHub', issues: 'Report an issue',
     headline: 'Real-time media.\nBuilt in Rust.',
-    description: 'A single-node WebRTC server for audio, video, and data, targeting full compatibility with LiveKit Server v1.13.10.',
+    description: 'An open-source, single-node WebRTC server for audio, video, and data, targeting full compatibility with LiveKit Server v1.13.10.',
     start: 'Get started', compare: 'Compare with Go', pipeline: 'Media forwarding path',
     publish: 'Publishers', node: 'Rust SFU', subscribe: 'Subscribers',
     media: 'Audio · Video · Data',
@@ -29,9 +32,9 @@ const locales = {
   'zh-Hans': {
     route: 'zh-hans/', name: '简体中文', home: '首页', guides: '快速开始', cli: 'CLI', sdk: 'SDK 接入', compatibility: '兼容性',
     skip: '跳到正文', nav: '主导航', contents: '本页目录',
-    subtitle: '单节点 WebRTC 服务器',
+    openSource: '开源项目', source: '在 GitHub 查看源码', issues: '反馈问题',
     headline: '实时媒体，\n用 Rust 构建。',
-    description: '转发实时音频、视频与数据的单节点 WebRTC 服务器，目标是与 LiveKit Server v1.13.10 完全兼容。',
+    description: '转发实时音频、视频与数据的开源单节点 WebRTC 服务器，目标是与 LiveKit Server v1.13.10 完全兼容。',
     start: '快速开始', compare: '查看 Go 对照', pipeline: '媒体转发路径',
     publish: '发布端', node: 'Rust SFU', subscribe: '订阅端',
     media: '音频 · 视频 · 数据',
@@ -65,10 +68,11 @@ function home(lang) {
   const t = locales[lang];
   const from = route(lang, '');
   return `<section class="hero"><div class="hero-copy">
-    <p class="eyebrow">${t.subtitle}</p>
+    <p class="open-source"><strong>${t.openSource}</strong><a href="${license}">Apache-2.0</a></p>
     <h1>${escape(t.headline).replaceAll('\n', '<br>')}</h1>
     <p class="lede">${t.description}</p>
-    <div class="actions"><a class="button primary" href="${url(from, route(lang, 'guides'))}">${t.start} <span aria-hidden="true">→</span></a>
+    <div class="actions"><a class="button primary" href="${repository}">${t.source} <span aria-hidden="true">↗</span></a>
+    <a class="button secondary" href="${url(from, route(lang, 'guides'))}">${t.start}</a>
     <a class="button secondary" href="${url(from, route(lang, 'compatibility'))}">${t.compare}</a></div></div>
     <figure class="pipeline"><figcaption>${t.pipeline}</figcaption><div class="flow">
       <span>${t.publish}</span><b aria-hidden="true">→</b><strong>${t.node}</strong><b aria-hidden="true">→</b><span>${t.subscribe}</span>
@@ -142,10 +146,10 @@ ${Object.keys(locales).map((id) => `<link rel="alternate" hreflang="${id}" href=
 <body>
 <a class="skip" href="#main">${t.skip}</a>
 <header><div class="bar"><a class="brand" href="${url(from, route(lang, ''))}"><span aria-hidden="true">◈</span> livekit-rs</a>
-<nav aria-label="${t.nav}">${navigation.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : item === 'sdk' && tutorials[page] ? ' aria-current="true"' : ''}>${t[item || 'home']}</a>`).join('')}</nav>
+<nav aria-label="${t.nav}">${navigation.map((item) => `<a href="${url(from, route(lang, item))}"${item === page ? ' aria-current="page"' : item === 'sdk' && tutorials[page] ? ' aria-current="true"' : ''}>${t[item || 'home']}</a>`).join('')}<a class="github-link" href="${repository}">GitHub <span aria-hidden="true">↗</span></a></nav>
 <a class="language" href="${url(from, route(other, page))}" lang="${other}" hreflang="${other}">${locales[other].name}</a></div></header>
 <main id="main" class="wrap">${body}</main>
-<footer class="wrap"><span>livekit-rs</span><span>${t.footer}</span></footer>
+<footer class="wrap"><span>livekit-rs</span><span>${t.footer}</span><div class="footer-links"><a href="${repository}">GitHub</a><a href="${license}">Apache-2.0</a><a href="${issues}">${t.issues}</a></div></footer>
 </body>
 </html>`;
 }
