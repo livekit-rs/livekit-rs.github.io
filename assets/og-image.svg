@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="0.85" cy="0.08" r="0.95">
+      <stop offset="0" stop-color="#ae4219" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#13110f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#13110f"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g transform="translate(80,62) scale(0.85)">
+    <rect width="64" height="64" rx="14" fill="#1d1815" stroke="#40332b"/>
+    <path d="M32 9 55 32 32 55 9 32Z" fill="none" stroke="#ff9864" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M32 23.5 40.5 32 32 40.5 23.5 32Z" fill="#ff9864"/>
+  </g>
+  <text x="156" y="106" font-family="'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace" font-size="34" font-weight="700" fill="#fff5ed">livekit-rs</text>
+  <text x="80" y="268" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="78" font-weight="800" letter-spacing="-3" fill="#fff5ed">Real-time media.</text>
+  <text x="80" y="360" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="78" font-weight="800" letter-spacing="-3" fill="#ff9864">Built in Rust.</text>
+  <text x="80" y="428" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="29" fill="#c6b8ae">Open-source single-node WebRTC server · LiveKit compatible</text>
+  <g font-family="'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace" font-size="23" text-anchor="middle">
+    <rect x="80" y="492" width="270" height="64" rx="8" fill="#241a15" stroke="#40332b"/>
+    <text x="215" y="532" fill="#c6b8ae">Publishers</text>
+    <text x="390" y="533" fill="#ff9864">→</text>
+    <rect x="430" y="492" width="270" height="64" rx="8" fill="#241a15" stroke="#b76b49"/>
+    <text x="565" y="532" fill="#ff9864" font-weight="700">Rust SFU</text>
+    <text x="740" y="533" fill="#ff9864">→</text>
+    <rect x="780" y="492" width="270" height="64" rx="8" fill="#241a15" stroke="#40332b"/>
+    <text x="915" y="532" fill="#c6b8ae">Subscribers</text>
+  </g>
+  <text x="1120" y="106" text-anchor="end" font-family="'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace" font-size="22" fill="#c6b8ae">livekit-rs.com</text>
+</svg>

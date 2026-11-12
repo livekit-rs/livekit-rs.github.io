@@ -4,6 +4,7 @@ import json
 from html.parser import HTMLParser
 from pathlib import Path
 import re
+import struct
 from xml.etree import ElementTree
 from urllib.parse import unquote, urljoin, urlsplit
 
@@ -17,6 +18,11 @@ PAGE_ROUTES = ("", "cli/", "sdk/", "sdk/react/", "sdk/android/", "sdk/ios/", "sd
 LOCALES = {"": "en", "zh-hans/": "zh-Hans"}
 ORIGIN = "https://livekit-rs.com/"
 FORBIDDEN = re.compile(r"livekit-platform|livekit-docs|netonlive|spec-?0078", re.I)
+HOME_TITLES = {
+    "en": "livekit-rs — Rust WebRTC Server, LiveKit Compatible",
+    "zh-Hans": "livekit-rs — Rust 开源 WebRTC 服务器，兼容 LiveKit",
+}
+OG_LOCALES = {"en": "en_US", "zh-Hans": "zh_CN"}
 
 
 class Page(HTMLParser):
@@ -30,12 +36,30 @@ class Page(HTMLParser):
         self.guide_links = []
         self.canonical = None
         self.alternates = {}
+        self.meta = {}
+        self.icons = []
+        self.jsonld = []
+        self.title = None
+        self.in_title = False
+        self.in_ld = False
+        self.ld_buffer = ""
         self.feed(path.read_text())
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag == "html":
             self.lang = attrs.get("lang")
+        if tag == "title":
+            self.in_title = True
+        if tag == "meta":
+            key = attrs.get("property") or attrs.get("name")
+            if key:
+                self.meta[key] = attrs.get("content")
+        if tag == "link" and attrs.get("rel") in ("icon", "apple-touch-icon"):
+            self.icons.append(attrs)
+        if tag == "script" and attrs.get("type") == "application/ld+json":
+            self.in_ld = True
+            self.ld_buffer = ""
         if tag == "aside":
             self.in_guide_menu = attrs.get("class") == "guide-menu"
         if tag == "a" and self.in_guide_menu:
@@ -52,14 +76,29 @@ class Page(HTMLParser):
         if "href" in attrs:
             self.refs.append(attrs["href"])
 
+    def handle_data(self, data):
+        if self.in_title:
+            self.title = (self.title or "") + data
+        if self.in_ld:
+            self.ld_buffer += data
+
     def handle_endtag(self, tag):
+        if tag == "title":
+            self.in_title = False
+        if tag == "script" and self.in_ld:
+            self.in_ld = False
+            self.jsonld.append(json.loads(self.ld_buffer))
         if tag == "aside":
             self.in_guide_menu = False
 
 
 for path in [ROOT / "README.md", *DIST.rglob("*")]:
     if path.is_file():
-        assert not FORBIDDEN.search(path.read_text()), f"Private project reference in {path}"
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue  # binary image assets carry no text references
+        assert not FORBIDDEN.search(text), f"Private project reference in {path}"
 
 for locale, language in LOCALES.items():
     for route in PAGE_ROUTES:
@@ -72,6 +111,28 @@ for locale, language in LOCALES.items():
             "zh-Hans": f"{ORIGIN}zh-hans/{route}",
             "x-default": f"{ORIGIN}{route}",
         }
+        if route == "":
+            assert page.title == HOME_TITLES[language]
+        assert page.meta["og:title"] == page.title
+        assert page.meta["og:description"] == page.meta["description"]
+        assert page.meta["og:url"] == page.canonical
+        assert page.meta["og:image"] == f"{ORIGIN}assets/og-image.png"
+        assert page.meta["og:locale"] == OG_LOCALES[language]
+        assert page.meta["twitter:card"] == "summary_large_image"
+        assert page.meta["twitter:image"] == page.meta["og:image"]
+        assert any(icon.get("type") == "image/svg+xml" for icon in page.icons)
+        assert any(icon.get("rel") == "apple-touch-icon" for icon in page.icons)
+        assert len(page.jsonld) == 1
+        graph = page.jsonld[0].get("@graph", [page.jsonld[0]])
+        types = {node["@type"] for node in graph}
+        if route == "":
+            assert types == {"WebSite", "SoftwareApplication"}
+        else:
+            assert types == {"BreadcrumbList"}
+            items = graph[0]["itemListElement"]
+            assert [item["position"] for item in items] == list(range(1, len(items) + 1))
+            assert items[0]["item"] == f"{ORIGIN}{locale}"
+            assert items[-1]["item"] == page.canonical
         if route in GUIDE_ROUTES:
             links = [
                 (urljoin(page.canonical, href), current)
@@ -104,7 +165,23 @@ for locale in LOCALES:
 sitemap = ElementTree.parse(DIST / "sitemap.xml")
 locations = [loc.text for loc in sitemap.findall(".//{*}loc")]
 assert sorted(locations) == sorted(f"{ORIGIN}{locale}{page}" for locale in LOCALES for page in PAGE_ROUTES)
+entries = sitemap.findall(".//{*}url")
+assert len(entries) == len(locations)
+for entry in entries:
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", entry.find("{*}lastmod").text)
 assert (DIST / "robots.txt").read_text() == f"Sitemap: {ORIGIN}sitemap.xml\n"
+
+
+def png_size(path):
+    header = path.read_bytes()[:24]
+    assert header[:8] == b"\x89PNG\r\n\x1a\n"
+    return struct.unpack(">II", header[16:24])
+
+
+assert png_size(DIST / "assets/og-image.png") == (1200, 630)
+assert png_size(DIST / "assets/apple-touch-icon.png") == (180, 180)
+assert png_size(DIST / "assets/favicon-32.png") == (32, 32)
+assert (DIST / "favicon.ico").is_file()
 
 TUTORIAL_EXAMPLES = {
     "react": "FirstCall.jsx",

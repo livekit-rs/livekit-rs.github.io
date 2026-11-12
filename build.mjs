@@ -1,4 +1,5 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 import { join, relative, resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Marked, Renderer } from 'marked';
@@ -12,6 +13,7 @@ const issues = `${repository}/issues`;
 const locales = {
   en: {
     route: '', name: 'English', home: 'Home', guides: 'Quickstart', cli: 'CLI', sdk: 'SDKs', compatibility: 'Compatibility',
+    homeTitle: 'livekit-rs — Rust WebRTC Server, LiveKit Compatible',
     skip: 'Skip to content', nav: 'Main navigation', contents: 'On this page',
     guideDescription: 'Start a local livekit-rs server, connect a client SDK, and find guides for deployment and troubleshooting.',
     guideNav: 'Guides', source: 'View source on GitHub', issues: 'Report an issue',
@@ -32,6 +34,7 @@ const locales = {
   },
   'zh-Hans': {
     route: 'zh-hans/', name: '简体中文', home: '首页', guides: '快速开始', cli: 'CLI', sdk: 'SDK 接入', compatibility: '兼容性',
+    homeTitle: 'livekit-rs — Rust 开源 WebRTC 服务器，兼容 LiveKit',
     skip: '跳到正文', nav: '主导航', contents: '本页目录',
     guideDescription: '从本地启动 livekit-rs 和接入客户端 SDK 开始，查看单机部署与故障排查指南。',
     guideNav: '使用指南', source: '在 GitHub 查看源码', issues: '反馈问题',
@@ -97,6 +100,15 @@ const escape = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
   .replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
 const headingId = (label) => label.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-');
+
+function lastmod(source) {
+  try {
+    return execSync(`git log -1 --format=%cs -- "${source}"`, { cwd: site, encoding: 'utf8' }).trim()
+      || new Date().toISOString().slice(0, 10);
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
 
 function home(lang) {
   const t = locales[lang];
@@ -175,25 +187,92 @@ function guideSidebar(lang, page, from) {
   return `<aside class="guide-menu" aria-label="${label}"><p>${label}</p><ul>${links}</ul></aside>`;
 }
 
+const ogLocales = { en: 'en_US', 'zh-Hans': 'zh_CN' };
+
+function structuredData(lang, page, title, description) {
+  const t = locales[lang];
+  const canonical = origin + route(lang, page);
+  if (!page) {
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: 'livekit-rs',
+          url: origin,
+          inLanguage: Object.keys(locales),
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'livekit-rs',
+          url: canonical,
+          description,
+          applicationCategory: 'DeveloperApplication',
+          isAccessibleForFree: true,
+          offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+          license,
+          codeRepository: repository,
+        },
+      ],
+    };
+  }
+  const crumbs = [[route(lang, ''), t.home]];
+  const section = page.split('/')[0];
+  if (page !== section) crumbs.push([route(lang, section), t[section]]);
+  crumbs.push([route(lang, page), title.split(' | ')[0]]);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map(([path, name], index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name,
+      item: origin + path,
+    })),
+  };
+}
+
 function shell(lang, page, body) {
   const t = locales[lang];
   const from = route(lang, page);
   const other = lang === 'en' ? 'zh-Hans' : 'en';
   const chapter = guideChapters[page]?.[lang];
-  const title = page ? `${chapter?.[0] ?? t[page] ?? tutorials[page]} | livekit-rs` : 'livekit-rs';
+  const title = page ? `${chapter?.[0] ?? t[page] ?? tutorials[page]} | livekit-rs` : t.homeTitle;
   const description = chapter?.[1] ?? (page === 'guides' ? t.guideDescription : t.description);
   const section = page.split('/')[0];
+  const canonical = origin + from;
+  const image = `${origin}assets/og-image.png`;
+  const assets = url(from, 'assets');
   return `<!doctype html>
 <html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="${escape(description)}">
-<title>${title}</title>
-<link rel="canonical" href="${origin}${from}">
+<title>${escape(title)}</title>
+<link rel="canonical" href="${canonical}">
 ${Object.keys(locales).map((id) => `<link rel="alternate" hreflang="${id}" href="${origin}${route(id, page)}">`).join('\n')}
 <link rel="alternate" hreflang="x-default" href="${origin}${route('en', page)}">
-<link rel="stylesheet" href="${url(from, 'assets')}site.css">
+<link rel="icon" href="${assets}favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${assets}favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="${assets}apple-touch-icon.png">
+<meta property="og:site_name" content="livekit-rs">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${escape(title)}">
+<meta property="og:description" content="${escape(description)}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:image" content="${image}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="livekit-rs — Real-time media. Built in Rust.">
+<meta property="og:locale" content="${ogLocales[lang]}">
+<meta property="og:locale:alternate" content="${ogLocales[other]}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escape(title)}">
+<meta name="twitter:description" content="${escape(description)}">
+<meta name="twitter:image" content="${image}">
+<script type="application/ld+json">${JSON.stringify(structuredData(lang, page, title, description))}</script>
+<link rel="stylesheet" href="${assets}site.css">
 </head>
 <body>
 <a class="skip" href="#main">${t.skip}</a>
@@ -220,8 +299,11 @@ for (const [source, target] of Object.entries(downloads)) {
   await cp(resolve(site, 'content', source), join(output, target));
 }
 await writeFile(join(output, '.nojekyll'), '');
-const sitemap = Object.keys(locales).flatMap((lang) => pages.map((page) =>
-  `  <url><loc>${origin}${route(lang, page)}</loc></url>`)).join('\n');
+await cp(join(site, 'assets', 'favicon.ico'), join(output, 'favicon.ico'));
+const sitemap = Object.keys(locales).flatMap((lang) => pages.map((page) => {
+  const source = page ? join('content', `${page.replaceAll('/', '-')}.${lang}.md`) : 'build.mjs';
+  return `  <url><loc>${origin}${route(lang, page)}</loc><lastmod>${lastmod(source)}</lastmod></url>`;
+})).join('\n');
 await writeFile(join(output, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap}\n</urlset>\n`);
 await writeFile(join(output, 'robots.txt'), `Sitemap: ${origin}sitemap.xml\n`);
